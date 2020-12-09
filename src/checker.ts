@@ -31,10 +31,6 @@ const expectedReachabilityMatrix: { [key: string]: NetReachability } = {};
 const remoteCheckers: { [key: string]: CheckerInfo } = {};
 
 async function fetchNode(node: string) {
-    if (isLocalAddress(node)) {
-        return;
-    }
-
     const url = `http://${node}:${config.listenport}`;
     const infoRes = await got(`${url}/info`);
     const info = JSON.parse(infoRes.body) as InfoCallback;
@@ -46,13 +42,13 @@ async function fetchNode(node: string) {
             remoteCheckers[netNameLower] = curChecker;
         }
         const netInfo = info.networks[netName];
-        if (!curChecker.ipv4 && netInfo.ipv4) {
+        if (!curChecker.ipv4 && netInfo.ipv4 && !isLocalAddress(netInfo.ipv4)) {
             curChecker.ipv4 = {
                 hostname: info.hostname,
                 url: `http://${netInfo.ipv4}:${config.listenport}/ip`,
             };
         }
-        if (!curChecker.ipv6 && netInfo.ipv6) {
+        if (!curChecker.ipv6 && netInfo.ipv6 && !isLocalAddress(netInfo.ipv6)) {
             curChecker.ipv6 = {
                 hostname: info.hostname,
                 url: `http://[${netInfo.ipv6}]:${config.listenport}/ip`,

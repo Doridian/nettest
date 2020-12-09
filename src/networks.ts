@@ -13,7 +13,7 @@ interface InterfaceInfo {
 
 const allAddresses: Set<string> = new Set();
 export function isLocalAddress(addr: string) {
-    return allAddresses.has(addr);
+    return allAddresses.has(addr) || discardMatcher.contains(addr);
 }
 
 const networkInterfaces: InterfaceInfo[] = [];
