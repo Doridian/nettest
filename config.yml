@@ -20,6 +20,11 @@ network_routes:
     dest: '*'
   - src: '*'
     dest: DMZ
+  - src: '*'
+    dest: Isolate
+    unreachable: yes
+  - src: Isolate
+    dest: Isolate
   - src: LAN
     dest: IoT
   - src: LAN
