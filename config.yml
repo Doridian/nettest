@@ -1,0 +1,26 @@
+listenport: 1337
+remoteNodes:
+#  - 192.168.1.11
+  - 192.168.4.22
+networks:
+  MGMT:
+    subnet: 192.168.1.0/24
+  DMZ:
+    subnet: 192.168.2.0/24
+  IoT:
+    subnet: 192.168.3.0/24
+  LAN:
+    subnet: 192.168.4.0/24
+  Isolate:
+    subnet: 192.168.5.0/24
+  Tor:
+    subnet: 192.168.50.0/24
+network_routes:
+  - src: MGMT
+    dest: '*'
+  - src: '*'
+    dest: DMZ
+  - src: LAN
+    dest: IoT
+  - src: LAN
+    dest: Tor
