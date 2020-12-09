@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "listener": "npm run build && node build/listener.js",
-    "start": "npm run build && node build/checker.js"
+    "start": "npm run build && node build/checker.js",
+    "rules": "npm run build && node build/rules.js"
   },
   "author": "",
   "license": "ISC",

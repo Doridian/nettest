@@ -5,16 +5,28 @@ remoteNodes:
 networks:
   MGMT:
     subnet: 192.168.1.0/24
+    gateway: 192.168.1.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
   DMZ:
     subnet: 192.168.2.0/24
+    gateway: 192.168.2.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
   IoT:
     subnet: 192.168.3.0/24
+    gateway: 192.168.3.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
   LAN:
     subnet: 192.168.4.0/24
+    gateway: 192.168.4.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
   Isolate:
     subnet: 192.168.5.0/24
+    gateway: 192.168.5.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
   Tor:
     subnet: 192.168.50.0/24
+    gateway: 192.168.50.6
+    gateway6: 'fe80::4a8f:5aff:fe6c:d583'
 network_routes:
   - src: MGMT
     dest: '*'
