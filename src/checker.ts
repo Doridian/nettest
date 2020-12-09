@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import { config } from './config';
 import { networks } from './networks';
 import { InfoCallback, Network } from './types';
+import clc from 'cli-color';
 
 interface NodeInfo {
     hostname: string;
@@ -19,9 +20,9 @@ interface NetReachability {
 }
 
 enum Reachability {
-    UNKNOWN,
-    REACHABLE,
-    UNREACHABLE,
+    UNKNOWN = 'Unknown',
+    REACHABLE = 'Reachable',
+    UNREACHABLE = 'Unreachable',
 };
 
 const reachabilityMatrix: { [key: string]: NetReachability } = {};
@@ -74,14 +75,15 @@ function makeReachabilityKey(src: Network, dest: Network) {
 function getNetworksFromReachabilityKey(key: string) {
     const [srcName, destName] = key.split('|');
     return {
-        src: networks[srcName],
-        dest: networks[destName],
+        srcNetwork: networks[srcName],
+        destNetwork: networks[destName],
     };
 }
 
 async function main() {
     let promises: Promise<void>[] = [];
 
+    // Load remote nodes to get full VLAN coverage
     for (const node of config.remoteNodes) {
         promises.push(fetchNode(node).catch((e) => {
             console.warn(`Error contacting node ${node}: ${e}`);
@@ -91,6 +93,7 @@ async function main() {
     await Promise.all(promises);
     promises = [];
 
+    // Initialize expected reachability to defaults and run reachability tests
     for (const destName of Object.keys(networks)) {
         const destNetwork = networks[destName];
         const checker = remoteCheckers[destName.toLowerCase()];
@@ -105,8 +108,8 @@ async function main() {
             };
             reachabilityMatrix[reachKey] = netReach;
 
-            const matrixHasV4 = srcNetwork.ipv4 && destNetwork.ipv4;
-            const matrixHasV6 = srcNetwork.ipv6 && destNetwork.ipv6;
+            const matrixHasV4 = srcNetwork.ipv4 && destNetwork.ipv4 && checker && checker.ipv4;
+            const matrixHasV6 = srcNetwork.ipv6 && destNetwork.ipv6 && checker && checker.ipv6;
             
             const expectedReachDefault = (srcNetwork === destNetwork) ? Reachability.REACHABLE : Reachability.UNREACHABLE;
             expectedReachabilityMatrix[reachKey] = {
@@ -114,16 +117,13 @@ async function main() {
                 ipv6: matrixHasV6 ? expectedReachDefault : Reachability.UNKNOWN,
             };
 
-            if (!checker) {
-                continue;
-            }
-            if (checker.ipv4 && matrixHasV4) {
-                promises.push(runCheck(checker.ipv4).then(r => {
+            if (matrixHasV4) {
+                promises.push(runCheck(checker.ipv4!).then(r => {
                     netReach.ipv4 = r;
                 }));
             }
-            if (checker.ipv6 && matrixHasV6) {
-                promises.push(runCheck(checker.ipv6).then(r => {
+            if (matrixHasV6) {
+                promises.push(runCheck(checker.ipv6!).then(r => {
                     netReach.ipv6 = r;
                 }));
             }
@@ -133,6 +133,7 @@ async function main() {
     await Promise.all(promises);
     promises = [];
 
+    // Adjust expected reachability according to rules
     for (const rule of config.network_routes) {
         const srcStr = rule.src as string;
         const destStr = rule.dest as string;
@@ -164,11 +165,25 @@ async function main() {
         }
     }
     
-    console.log(expectedReachabilityMatrix);
-    console.log(reachabilityMatrix);
+    // Verify expected and actual match
+    for (const key of Object.keys(reachabilityMatrix)) {
+        const actualReach = reachabilityMatrix[key];
+        const expectedReach = expectedReachabilityMatrix[key];
 
-    for (const destName of Object.keys(networks)) {
-        for (const srcName of Object.keys(networks)) {
+        const { srcNetwork, destNetwork } = getNetworksFromReachabilityKey(key);
+
+        const ipv4ok = actualReach.ipv4 === expectedReach.ipv4;
+        const ipv6ok = actualReach.ipv6 === expectedReach.ipv6;
+        const allok = ipv4ok && ipv6ok;
+
+        console.info(clc.blue(`${srcNetwork.name} -> ${destNetwork.name}: v4=${actualReach.ipv4};v6=${actualReach.ipv6}`));
+        if (!allok) {
+            if (!ipv4ok) {
+                console.warn(clc.red(`${srcNetwork.name} -> ${destNetwork.name}: ERROR v4 expected=${expectedReach.ipv4}`));
+            }
+            if (!ipv6ok) {
+                console.warn(clc.red(`${srcNetwork.name} -> ${destNetwork.name}: ERROR v6 expected=${expectedReach.ipv6}`));
+            }            
         }
     }
 }
