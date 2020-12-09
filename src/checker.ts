@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import got from 'got';
 import { config } from './config';
 import { networks } from './networks';
 import { InfoCallback, Network } from './types';
@@ -32,8 +32,8 @@ const remoteCheckers: { [key: string]: CheckerInfo } = {};
 
 async function fetchNode(node: string) {
     const url = `http://${node}:${config.listenport}`;
-    const infoRes = await fetch(`${url}/info`);
-    const info = (await infoRes.json()) as InfoCallback;
+    const infoRes = await got(`${url}/info`);
+    const info = JSON.parse(infoRes.body) as InfoCallback;
     for (const netName of Object.keys(info.networks)) {
         const netNameLower = netName.toLowerCase();
         let curChecker = remoteCheckers[netNameLower];
@@ -57,10 +57,11 @@ async function fetchNode(node: string) {
     }
 }
 
-async function runCheck(node: NodeInfo) {
+async function runCheck(srcAddr: string, node: NodeInfo) {
     try {
-        await fetch(node.url, {
+        await got(node.url, {
             timeout: 1000,
+            localAddress: srcAddr,
         });
         return Reachability.REACHABLE;
     } catch {
@@ -118,12 +119,12 @@ async function main() {
             };
 
             if (matrixHasV4) {
-                promises.push(runCheck(checker.ipv4!).then(r => {
+                promises.push(runCheck(srcNetwork.ipv4!, checker.ipv4!).then(r => {
                     netReach.ipv4 = r;
                 }));
             }
             if (matrixHasV6) {
-                promises.push(runCheck(checker.ipv6!).then(r => {
+                promises.push(runCheck(srcNetwork.ipv6!, checker.ipv6!).then(r => {
                     netReach.ipv6 = r;
                 }));
             }
