@@ -11,6 +11,11 @@ interface InterfaceInfo {
     ipv6?: string;
 }
 
+const allAddresses: Set<string> = new Set();
+export function isLocalAddress(addr: string) {
+    return allAddresses.has(addr);
+}
+
 const networkInterfaces: InterfaceInfo[] = [];
 function loadNetworkInterfaces() {
     const ifaces = getNetworkInterfaces();
@@ -22,6 +27,8 @@ function loadNetworkInterfaces() {
             if (discardMatcher.contains(addr.address)) {
                 return;
             }
+
+            allAddresses.add(addr.address);
 
             if (addr.family === 'IPv4' && !ipv4) {
                 ipv4 = addr.address;

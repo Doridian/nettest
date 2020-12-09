@@ -1,6 +1,6 @@
 import got from 'got';
 import { config } from './config';
-import { networks } from './networks';
+import { isLocalAddress, networks } from './networks';
 import { InfoCallback, Network } from './types';
 import clc from 'cli-color';
 
@@ -31,6 +31,10 @@ const expectedReachabilityMatrix: { [key: string]: NetReachability } = {};
 const remoteCheckers: { [key: string]: CheckerInfo } = {};
 
 async function fetchNode(node: string) {
+    if (isLocalAddress(node)) {
+        return;
+    }
+
     const url = `http://${node}:${config.listenport}`;
     const infoRes = await got(`${url}/info`);
     const info = JSON.parse(infoRes.body) as InfoCallback;
