@@ -3,12 +3,14 @@ import { networkInterfaces as getNetworkInterfaces, hostname as getHostname } fr
 import CIDRMatcher from 'cidr-matcher';
 import { Network } from './types';
 
+const discardMatcher = new CIDRMatcher(['fe80::/10', '::/128', '::1/128', '127.0.0.0/8', '0.0.0.0/32', '169.254.0.0/16']);
+
 interface InterfaceInfo {
     name: string;
     ipv4?: string;
     ipv6?: string;
-
 }
+
 const networkInterfaces: InterfaceInfo[] = [];
 function loadNetworkInterfaces() {
     const ifaces = getNetworkInterfaces();
@@ -17,6 +19,10 @@ function loadNetworkInterfaces() {
         let ipv4: string | undefined;
         let ipv6: string | undefined;
         addrs.forEach((addr) => {
+            if (discardMatcher.contains(addr.address)) {
+                return;
+            }
+
             if (addr.family === 'IPv4' && !ipv4) {
                 ipv4 = addr.address;
             } else if (addr.family == 'IPv6' && !ipv6) {

@@ -108,8 +108,8 @@ async function main() {
             };
             reachabilityMatrix[reachKey] = netReach;
 
-            const matrixHasV4 = srcNetwork.ipv4 && destNetwork.ipv4 && checker && checker.ipv4;
-            const matrixHasV6 = srcNetwork.ipv6 && destNetwork.ipv6 && checker && checker.ipv6;
+            const matrixHasV4 = srcNetwork.ipv4 && checker && checker.ipv4;
+            const matrixHasV6 = srcNetwork.ipv6 && checker && checker.ipv6;
             
             const expectedReachDefault = (srcNetwork === destNetwork) ? Reachability.REACHABLE : Reachability.UNREACHABLE;
             expectedReachabilityMatrix[reachKey] = {
@@ -139,8 +139,8 @@ async function main() {
         const destStr = rule.dest as string;
         const setReach = rule.unreachable ? Reachability.UNREACHABLE : Reachability.REACHABLE;
 
-        let srcs: string[] = [];
-        let dests: string[] = [];
+        let srcs: string[] = [srcStr];
+        let dests: string[] = [destStr];
         if (srcStr === '*') {
             srcs = Object.keys(networks);
         }
