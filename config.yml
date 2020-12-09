@@ -1,7 +1,7 @@
 listenport: 1337
 remoteNodes:
   - 192.168.1.100
-#  - 192.168.4.22
+  - 192.168.1.101
 networks:
   MGMT:
     subnet: 192.168.1.0/24
