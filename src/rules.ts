@@ -7,8 +7,8 @@ function main() {
         }
 
         if (net.ipv4CIDR) {
-            console.log(`ip rule add from "${net.ipv4CIDR}" table "${net.iface}"`);
-            console.log(`ip route add "${net.ipv4CIDR}" dev "${net.iface}" table "${net.iface}"`);
+            console.log(`ip rule add from "${net.netConf.subnet}" table "${net.iface}"`);
+            console.log(`ip route add "${net.netConf.subnet}" dev "${net.iface}" table "${net.iface}"`);
             if (net.netConf.gateway) {
                 console.log(`ip route add default via "${net.netConf.gateway}" dev "${net.iface}" table "${net.iface}"`);
             }
