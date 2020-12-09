@@ -71,14 +71,25 @@ function makeReachabilityKey(src: Network, dest: Network) {
     return `${src.name.toLowerCase()}|${dest.name.toLowerCase()}`;
 }
 
+function getNetworksFromReachabilityKey(key: string) {
+    const [srcName, destName] = key.split('|');
+    return {
+        src: networks[srcName],
+        dest: networks[destName],
+    };
+}
+
 async function main() {
+    let promises: Promise<void>[] = [];
+
     for (const node of config.remoteNodes) {
-        try {
-            await fetchNode(node);
-        } catch (e) {
+        promises.push(fetchNode(node).catch((e) => {
             console.warn(`Error contacting node ${node}: ${e}`);
-        }
+        }));
     }
+
+    await Promise.all(promises);
+    promises = [];
 
     for (const destName of Object.keys(networks)) {
         const destNetwork = networks[destName];
@@ -107,13 +118,20 @@ async function main() {
                 continue;
             }
             if (checker.ipv4 && matrixHasV4) {
-                netReach.ipv4 = await runCheck(checker.ipv4);
+                promises.push(runCheck(checker.ipv4).then(r => {
+                    netReach.ipv4 = r;
+                }));
             }
             if (checker.ipv6 && matrixHasV6) {
-                netReach.ipv6 = await runCheck(checker.ipv6);
+                promises.push(runCheck(checker.ipv6).then(r => {
+                    netReach.ipv6 = r;
+                }));
             }
         }
     }
+
+    await Promise.all(promises);
+    promises = [];
 
     for (const rule of config.network_routes) {
         const srcStr = rule.src as string;
